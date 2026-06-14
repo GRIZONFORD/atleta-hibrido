@@ -1,0 +1,46 @@
+# ── Entornos virtuales ──────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Caché de Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ── 🔐 SECRETOS — NUNCA subir (tokens, credenciales) ────────────────
+.garth_token/
+token.json
+credentials.json
+client_secret*.json
+*.key
+*.pem
+.env
+.env.*
+.streamlit/secrets.toml
+
+# ── Datos personales locales (no van al repo) ───────────────────────
+yazio_data.json
+*.sqlite
+*.sqlite3
+*.db
+
+# ── Sistema operativo / IDE ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# ── Build / distribución ────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
