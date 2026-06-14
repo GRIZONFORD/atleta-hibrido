@@ -41,14 +41,24 @@ def main() -> None:
     api.client.load(str(GARTH_HOME))   # carga local (sin red)
     token_b64 = api.client.dumps()     # serializa a base64
 
+    # Escribir a ARCHIVO (no imprimir): la terminal parte el token largo con
+    # saltos de línea y eso rompe el TOML al pegarlo. El archivo lo mantiene
+    # en una sola línea. Está en .gitignore: nunca llega al repo.
+    out = Path(__file__).resolve().parent / "streamlit_secrets.toml"
+    out.write_text(
+        f'GARMIN_EMAIL = "{email}"\n'
+        f'GARMIN_TOKEN_B64 = "{token_b64}"\n',
+        encoding="utf-8",
+    )
+
     print("\n" + "=" * 64)
-    print("  COPIA ESTO EN: Streamlit Cloud → Settings → Secrets")
-    print("  (formato TOML — pégalo tal cual)")
-    print("=" * 64 + "\n")
-    print(f'GARMIN_EMAIL = "{email}"')
-    print(f'GARMIN_TOKEN_B64 = "{token_b64}"')
-    print("\n" + "=" * 64)
-    print("  ⚠️  No compartas esto. Es tu sesión de Garmin.")
+    print("  ✅ Secrets escritos en:")
+    print(f"     {out}")
+    print("=" * 64)
+    print("  1) Abre ese archivo (Notepad / VS Code).")
+    print("  2) Selecciona TODO (Ctrl+A) y copia (Ctrl+C).")
+    print("  3) Pégalo en: Streamlit Cloud -> Settings -> Secrets -> Save.")
+    print("  4) Borra el archivo cuando termines (es tu sesion de Garmin).")
     print("=" * 64 + "\n")
 
 
