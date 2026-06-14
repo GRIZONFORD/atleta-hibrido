@@ -140,6 +140,25 @@ footer { visibility: hidden; }
 /* Ocultar solo el botón Deploy del toolbar, no el toolbar completo */
 [data-testid="stToolbarActionButtonLabel"] { display: none; }
 button[data-testid="stBaseButton-header"] { display: none; }
+
+/* ── 📱 RESPONSIVE MÓVIL ─────────────────────────────────────────── */
+/* Reducir padding lateral en pantallas estrechas para ganar espacio */
+@media (max-width: 640px) {
+    .block-container {
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+        padding-top: 2.6rem !important;
+    }
+    .zone-banner { font-size: 18px !important; padding: 16px 14px !important; }
+    .zone-sub { font-size: 12px !important; }
+    .section-label { font-size: 10px !important; }
+    /* Evitar que los gráficos se desborden */
+    .stPlotlyChart, iframe { max-width: 100% !important; }
+    /* Botones más altos = mejor objetivo táctil */
+    .stButton > button { min-height: 44px !important; font-size: 15px !important; }
+}
+/* Objetivos táctiles cómodos también en tablet */
+.stNumberInput button { min-width: 34px !important; min-height: 34px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -463,6 +482,43 @@ def timeline_fig(decision: TrainingDecision, busy: list):
     return fig
 
 
+# ── Colores de macronutrientes (consistentes con los anillos) ──────────────
+PROT_C, CARB_C, FAT_C, KCAL_C = NEON, BLUE, "#f472b6", AMBER
+MACRO_COLORS = {"kcal": KCAL_C, "prot": PROT_C, "carbs": CARB_C,
+                "fat": FAT_C, "weight": MUTED}
+
+# CSS inyectado una sola vez: acento de color por macro vía clase nativa
+# `.st-key-macrobox_<k>` (Streamlit 1.58 — reemplaza al deprecado stylable_container).
+_macro_css = "<style>"
+for _k, _c in MACRO_COLORS.items():
+    _macro_css += f"""
+    .st-key-macrobox_{_k} {{
+        border-left: 4px solid {_c};
+        border-radius: 10px; background: #0d1117;
+        padding: 2px 10px 2px 14px; margin-bottom: 8px;
+        box-shadow: 0 0 0 1px #21262d;
+    }}
+    .st-key-macrobox_{_k} label p {{
+        color: {_c} !important; font-weight: 700 !important; font-size: 12px !important;
+    }}
+    .st-key-macrobox_{_k} input {{
+        font-family: monospace !important; font-weight: 600 !important; font-size: 17px !important;
+    }}"""
+_macro_css += "</style>"
+st.markdown(_macro_css, unsafe_allow_html=True)
+
+
+def macro_input(label: str, *, key: str, **kwargs):
+    """Input de macro con acento de color a la izquierda (estilo MacroFactor/Yazio).
+
+    Usa `st.container(key=...)` nativo: Streamlit le asigna la clase
+    `.st-key-macrobox_<key>` cuyo color se define en `MACRO_COLORS` y se
+    inyecta arriba. El borde y la etiqueta coloreada dan identidad a cada macro.
+    """
+    with st.container(key=f"macrobox_{key}"):
+        return st.number_input(label, key=f"in_{key}", **kwargs)
+
+
 # ── Sidebar ────────────────────────────────────────────────────────────────
 scenario = "optimo"
 garmin_connected = RealGarminAdapter.is_authenticated()
@@ -484,16 +540,37 @@ with st.sidebar:
         scenario = SCENARIO_MAP[state_label]
 
     st.divider()
-    st.markdown("<div class='section-label'>🥗 Yazio — Macros de hoy</div>",
+    st.markdown("<div class='section-label'>🥗 Nutrición de hoy</div>",
                 unsafe_allow_html=True)
     saved_y = FileYazioAdapter().fetch_daily(dt.date.today())
     with st.form("yazio_form", border=False):
-        kcal_in   = st.number_input("Calorías",          min_value=0,    value=saved_y.kcal_ingested, step=50)
-        prot_in   = st.number_input("Proteína (g)",      min_value=0.0,  value=saved_y.protein_g,     step=5.0,  format="%.0f")
-        carbs_in  = st.number_input("Carbohidratos (g)", min_value=0.0,  value=saved_y.carbs_g,       step=10.0, format="%.0f")
-        fat_in    = st.number_input("Grasas (g)",        min_value=0.0,  value=saved_y.fat_g,         step=5.0,  format="%.0f")
-        weight_in = st.number_input("Peso (kg)",         min_value=30.0, value=saved_y.bodyweight_kg, step=0.1,  format="%.1f")
-        if st.form_submit_button("💾 Guardar macros", use_container_width=True):
+        kcal_in = macro_input(
+            "🔥 CALORÍAS (kcal)", key="kcal",
+            min_value=0, value=saved_y.kcal_ingested, step=50,
+        )
+        cP, cC = st.columns(2)
+        with cP:
+            prot_in = macro_input(
+                "🥩 PROTEÍNA (g)", key="prot",
+                min_value=0.0, value=saved_y.protein_g, step=5.0, format="%.0f",
+            )
+        with cC:
+            carbs_in = macro_input(
+                "🍚 CARBOS (g)", key="carbs",
+                min_value=0.0, value=saved_y.carbs_g, step=10.0, format="%.0f",
+            )
+        cF, cW = st.columns(2)
+        with cF:
+            fat_in = macro_input(
+                "🥑 GRASAS (g)", key="fat",
+                min_value=0.0, value=saved_y.fat_g, step=5.0, format="%.0f",
+            )
+        with cW:
+            weight_in = macro_input(
+                "⚖️ PESO (kg)", key="weight",
+                min_value=30.0, value=saved_y.bodyweight_kg, step=0.1, format="%.1f",
+            )
+        if st.form_submit_button("💾 Guardar registro de hoy", use_container_width=True):
             FileYazioAdapter.save_today(
                 int(kcal_in), float(prot_in), float(carbs_in),
                 float(fat_in), float(weight_in),

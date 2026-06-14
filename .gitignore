@@ -38,6 +38,9 @@ desktop.ini
 .vscode/
 *.swp
 
+# ── Config local de herramientas (rutas absolutas de esta máquina) ──
+.claude/launch.json
+
 # ── Build / distribución ────────────────────────────────────────────
 build/
 dist/
