@@ -18,13 +18,22 @@ class RealGarminAdapter:
 
     def __init__(self) -> None:
         import json
+        import os
         from garminconnect import Garmin
 
-        config_file = GARTH_HOME / "config.json"
-        email = json.loads(config_file.read_text(encoding="utf-8")).get("email", "")
-        # password vacío: garminconnect carga el token desde garmin_tokens.json
-        self._api = Garmin(email=email, password="placeholder")
-        self._api.login(tokenstore=str(GARTH_HOME))
+        token_b64 = os.environ.get("GARMIN_TOKEN_B64")
+        if token_b64:
+            # ☁️ Nube: token inyectado como variable de entorno (Streamlit secret).
+            # garminconnect detecta strings >512 chars como token base64 (no ruta).
+            email = os.environ.get("GARMIN_EMAIL", "")
+            self._api = Garmin(email=email, password="placeholder")
+            self._api.login(tokenstore=token_b64)
+        else:
+            # 💻 Local: token persistido en .garth_token por setup_garmin.py
+            config_file = GARTH_HOME / "config.json"
+            email = json.loads(config_file.read_text(encoding="utf-8")).get("email", "")
+            self._api = Garmin(email=email, password="placeholder")
+            self._api.login(tokenstore=str(GARTH_HOME))
 
     # ------------------------------------------------------------------
     def fetch_daily(self, day: date) -> GarminMetrics:
@@ -93,4 +102,5 @@ class RealGarminAdapter:
 
     @classmethod
     def is_authenticated(cls) -> bool:
-        return GARTH_HOME.exists()
+        import os
+        return GARTH_HOME.exists() or bool(os.environ.get("GARMIN_TOKEN_B64"))

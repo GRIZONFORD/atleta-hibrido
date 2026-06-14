@@ -43,6 +43,17 @@ st.set_page_config(
 )
 st_autorefresh(interval=5 * 60 * 1000, key="autorefresh")
 
+# ── Puente Streamlit Secrets → variables de entorno ─────────────────────────
+# En la nube, el token de Garmin se inyecta como secret; lo exponemos como env
+# var para que RealGarminAdapter (capa pura, sin Streamlit) lo lea sin acoplarse.
+import os as _os  # noqa: E402
+try:
+    for _k in ("GARMIN_TOKEN_B64", "GARMIN_EMAIL"):
+        if _k in st.secrets:
+            _os.environ[_k] = str(st.secrets[_k])
+except Exception:
+    pass
+
 # ── CSS Modo Oscuro Deportivo Premium ──────────────────────────────────────
 st.markdown("""
 <style>
