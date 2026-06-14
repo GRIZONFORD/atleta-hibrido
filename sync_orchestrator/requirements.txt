@@ -1,20 +1,24 @@
-# Orquestador Central — Atleta Híbrido
-# ── Core ──────────────────────────────────────────────────────────────────
-streamlit>=1.33
-streamlit-autorefresh>=1.0
-plotly>=5.0
-google-api-python-client>=2.130
-google-auth-oauthlib>=1.2
-google-auth>=2.30
-garminconnect>=0.3.5
-garth>=0.8.0
+# Atleta Híbrido OS — dependencias FIJADAS (lockfile) para deploy reproducible.
+# Versiones congeladas a las verificadas en local → "funciona en la nube igual que aquí".
 
-# ── Premium repos (instalados en .venv local, NO global) ──────────────────
-# GitHub: andfanilo/streamlit-echarts  — Apache ECharts en Streamlit
-streamlit-echarts>=0.4.0
-# GitHub: arnaudmiribel/streamlit-extras (964 stars) — componentes premium
-streamlit-extras>=1.0.0
-# GitHub: andfanilo/streamlit-lottie (~200 stars) — animaciones Lottie
-streamlit-lottie>=0.0.5
-# GitHub: Aura-healthcare/hrv-analysis — análisis HRV validado (RMSSD, LF/HF)
-hrv-analysis>=1.0.0
+# ── Core de la app ──────────────────────────────────────────────────────────
+streamlit==1.58.0
+streamlit-autorefresh==1.0.1
+numpy==2.4.6
+pandas==3.0.3
+plotly==6.8.0
+
+# ── Visualizaciones premium (GitHub) ────────────────────────────────────────
+streamlit-echarts==0.7.0      # andfanilo/streamlit-echarts — gauge Apache ECharts
+streamlit-extras==1.6.0       # arnaudmiribel/streamlit-extras — componentes premium
+streamlit-lottie==0.0.5       # andfanilo/streamlit-lottie — animaciones Lottie
+
+# ── Motor clínico HRV ───────────────────────────────────────────────────────
+hrv-analysis==1.0.6           # Aura-healthcare/hrv-analysis — RMSSD, SDNN validados
+
+# ── Integraciones externas ──────────────────────────────────────────────────
+google-api-python-client==2.197.0
+google-auth-oauthlib==1.4.0
+google-auth==2.54.0
+garminconnect==0.3.5
+garth==0.8.0
