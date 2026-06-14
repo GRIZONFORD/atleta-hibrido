@@ -28,9 +28,11 @@ maximizando masa muscular funcional.
 
 ## 🚀 Ejecutar en local
 
+Desde la **raíz del repositorio** (así Streamlit lee el tema de `.streamlit/config.toml`,
+igual que en la nube):
+
 ```powershell
-cd sync_orchestrator
-.venv\Scripts\streamlit run app\dashboard.py
+sync_orchestrator\.venv\Scripts\streamlit run sync_orchestrator\app\dashboard.py
 ```
 Abre http://localhost:8501. Sin conexión a Garmin, usa el selector de **simulación**
 (Óptimo / Fatigado / Subentrenado).

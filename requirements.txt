@@ -1,5 +1,6 @@
 # Atleta Híbrido OS — dependencias FIJADAS (lockfile) para deploy reproducible.
 # Versiones congeladas a las verificadas en local → "funciona en la nube igual que aquí".
+# Ubicado en la RAÍZ del repo: Streamlit Community Cloud solo detecta requirements.txt aquí.
 
 # ── Core de la app ──────────────────────────────────────────────────────────
 streamlit==1.58.0

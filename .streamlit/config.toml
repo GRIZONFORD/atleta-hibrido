@@ -1,5 +1,6 @@
 # Tema oscuro deportivo nativo — todos los widgets (inputs, selects) nacen
 # en modo oscuro, sin pelear con CSS. Paleta consistente con el dashboard.
+# En la RAÍZ del repo para que Streamlit Community Cloud lo aplique en la nube.
 [theme]
 base = "dark"
 primaryColor = "#39d353"
@@ -7,9 +8,6 @@ backgroundColor = "#0d1117"
 secondaryBackgroundColor = "#161b22"
 textColor = "#e6edf3"
 font = "sans serif"
-
-[server]
-headless = true
 
 [browser]
 gatherUsageStats = false
