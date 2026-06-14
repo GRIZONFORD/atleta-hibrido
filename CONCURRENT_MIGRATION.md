@@ -2,7 +2,81 @@
 
 > Registro histórico de la transición: **Running App básica → Ecosistema de Atleta Híbrido Concurrente**
 > Formato: [Keep a Changelog](https://keepachangelog.com/) + Migration Guide. Versionado [SemVer](https://semver.org/).
-> Última actualización: 2026-06-14 (rev. 2.4.0)
+> Última actualización: 2026-06-14 (rev. 2.5.0)
+
+---
+
+## [2.5.0] — 2026-06-14 — "Cloud Deploy, Real Integrations & Manual Scheduling"
+
+### Resumen
+Salto de "script local" a **producto desplegado y accesible desde el móvil**. Se establece el
+control de versiones (git + GitHub), se despliega en Streamlit Community Cloud, y las dos
+integraciones externas (Garmin y Google Calendar) pasan a funcionar **en la nube** mediante
+tokens cifrados en Streamlit Secrets. Además, rediseño premium de los inputs de macros, tema
+oscuro nativo, responsive móvil y control de hora manual para agendar.
+
+### Added
+
+#### Infraestructura / DevOps
+- **Repositorio git** inicializado con `.gitignore` blindado (excluye `.venv/`, `__pycache__/`,
+  `.garth_token/`, `token.json`, `credentials.json`, `yazio_data.json`, `*_secret.toml`).
+  Repo privado en GitHub: `GRIZONFORD/atleta-hibrido`.
+- **Despliegue en Streamlit Community Cloud** — app pública accesible desde el móvil (PWA
+  "agregar a inicio"). `requirements.txt` y `.streamlit/config.toml` movidos a la **raíz** del
+  repo (única ubicación que Streamlit Cloud detecta).
+- **`requirements.txt` fijado (lockfile)** — versiones exactas verificadas en local; añade
+  `numpy` y `pandas` que faltaban.
+- **`README.md`** profesional (estructura, ejecución, lógica de decisión, hoja de ruta).
+- **`.streamlit/config.toml`** — tema oscuro **nativo** (`base="dark"` + paleta) → los widgets
+  (inputs, selects) ya no nacen en blanco.
+
+#### Garmin en la nube
+- `RealGarminAdapter` lee `GARMIN_TOKEN_B64` del entorno (token de sesión en base64) y resume
+  sesión sin contraseña; fallback a `.garth_token/` local. `is_authenticated()` contempla ambos.
+- **`export_garmin_token.py`** — serializa el token local a base64 (TOML-safe) y lo escribe en
+  `streamlit_secrets.toml` para pegar en Streamlit Secrets.
+- Puente `st.secrets → os.environ` en el dashboard (mantiene la capa de adaptadores pura).
+
+#### Google Calendar real
+- `GoogleCalendarService` lee `GOOGLE_TOKEN_B64` del entorno y reconstruye credenciales OAuth con
+  refresh silencioso (no hay `run_local_server` en la nube); fallback a `token.json` local.
+  Nuevo `is_authenticated()` classmethod.
+- **`setup_calendar.py`** — flujo OAuth local único (`InstalledAppFlow`) → `token.json`.
+- **`export_calendar_token.py`** — `token.json` → base64 (TOML-safe) → `google_secret.toml`.
+- Botón del dashboard detecta si el calendario está autenticado: agenda **de verdad**
+  (upsert idempotente, esquiva conflictos vía FreeBusy) o muestra preview del slot.
+
+#### UX / Visual
+- **Inputs de macros premium** (estilo MacroFactor/Yazio): acento de color por nutriente
+  (proteína=verde, carbos=azul, grasas=rosa, calorías=ámbar) vía `st.container(key=…)` nativo
+  + CSS inyectado. Reemplaza la lista plana gris.
+- **CSS responsive** (`@media max-width:640px`): padding reducido, objetivos táctiles 44px.
+- **Control de hora manual** — toggle + slider (6–21h). La hora elegida pasa a "preferida"
+  vía `dataclasses.replace(decision, …)`; el `SlotFinder` sigue esquivando conflictos.
+
+### Fixed
+- **Token base64 TOML-safe** — `garth.dumps()`/`token.json` son JSON con comillas dobles que
+  rompían el TOML de Streamlit Secrets; se codifican a base64 y se decodifican en el adaptador.
+- **Toggle del sidebar visible** — el CSS ocultaba el `header` completo (que contiene el control
+  de colapso); ahora solo se oculta el branding.
+- **HTML de la tarjeta del bloque** — una línea condicional indentada generaba una línea en
+  blanco con sangría que Streamlit interpretaba como bloque de código Markdown (mostraba `<div>`
+  crudos). Reconstruida en una sola línea sin sangría.
+- **`StreamlitDuplicateElementKey`** y animaciones Lottie con fondo blanco — removidas.
+
+### Removed
+- `stylable_container` (deprecado en Streamlit 1.58) → `st.container(key=…)` nativo.
+- Animaciones Lottie de la vista principal (fondo blanco incompatible con el tema oscuro).
+
+### Security
+- Ningún secreto en el repo: tokens de Garmin/Google viven solo en Streamlit Secrets (cifrados)
+  y en archivos locales gitignored. Los archivos `*_secret.toml` de exportación son temporales.
+
+### Notas
+- **Caducidad de tokens:** el de Garmin rota (~semanal) y el de Google caduca en 7 días si la app
+  OAuth está en "Testing" (publicar a "In production" lo hace estable). Regenerar con los scripts
+  `setup_*` + `export_*` cuando vuelva a "simulación".
+- Convención: el HTML dentro de `st.markdown(..., unsafe_allow_html=True)` debe ir **sin sangría**.
 
 ---
 
