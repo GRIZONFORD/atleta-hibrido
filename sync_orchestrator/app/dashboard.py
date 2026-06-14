@@ -741,22 +741,20 @@ with c3:
         eff_decision = decision
 
     slot_lbl = "☀️ Mañana (AM)" if eff_decision.start_hour < 12 else "🌆 Tarde (PM)"
+    manual_tag = ' &nbsp;·&nbsp; <span style="color:#f59e0b">manual</span>' if manual_hour else ""
     st.markdown(
-        f"""<div class="metric-card">
-            <div style="color:{zcfg['color']};font-size:17px;font-weight:700;margin-bottom:8px;">
-                {eff_decision.title}
-            </div>
-            <div style="color:{MUTED};font-size:12px;margin-bottom:14px;">
-                {slot_lbl} &nbsp;·&nbsp; {eff_decision.start_hour}:00 &nbsp;·&nbsp; {eff_decision.duration_min} min
-                {' &nbsp;·&nbsp; <span style="color:#f59e0b">manual</span>' if manual_hour else ''}
-            </div>
-            <div style="font-size:13px;line-height:2.1;">
-                🥩 Proteína: <b style="color:{NEON};">{prot_target:.0f} g</b>
-                <span style="color:{MUTED};font-size:11px;"> ({decision.protein_g_per_kg_target:.1f} g/kg)</span><br>
-                🍚 Carbos: <b style="color:{BLUE};">{carbs_target:.0f} g</b>
-                <span style="color:{MUTED};font-size:11px;"> ({decision.carbs_g_per_kg_target:.1f} g/kg)</span>
-            </div>
-        </div>""",
+        f'<div class="metric-card">'
+        f'<div style="color:{zcfg["color"]};font-size:17px;font-weight:700;margin-bottom:8px;">'
+        f'{eff_decision.title}</div>'
+        f'<div style="color:{MUTED};font-size:12px;margin-bottom:14px;">'
+        f'{slot_lbl} &nbsp;·&nbsp; {eff_decision.start_hour}:00 &nbsp;·&nbsp; '
+        f'{eff_decision.duration_min} min{manual_tag}</div>'
+        f'<div style="font-size:13px;line-height:2.1;">'
+        f'🥩 Proteína: <b style="color:{NEON};">{prot_target:.0f} g</b>'
+        f'<span style="color:{MUTED};font-size:11px;"> ({decision.protein_g_per_kg_target:.1f} g/kg)</span><br>'
+        f'🍚 Carbos: <b style="color:{BLUE};">{carbs_target:.0f} g</b>'
+        f'<span style="color:{MUTED};font-size:11px;"> ({decision.carbs_g_per_kg_target:.1f} g/kg)</span>'
+        f'</div></div>',
         unsafe_allow_html=True,
     )
     cal_ready = bool(_os.environ.get("GOOGLE_TOKEN_B64")) or Path("token.json").exists()
