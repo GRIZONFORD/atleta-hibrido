@@ -65,7 +65,31 @@ class GoogleCalendarService:
 
     # --------------------------------------------------------- autenticacion
     def _build_service(self) -> Any:
-        """Construye el cliente con refresh defensivo de OAuth2."""
+        """Construye el cliente con refresh defensivo de OAuth2.
+
+        En la nube (Streamlit Cloud) no hay navegador para el consentimiento:
+        si existe GOOGLE_TOKEN_B64 en el entorno (base64 del token.json), reconstruye
+        las credenciales desde ahi y las refresca sin interaccion humana.
+        """
+        # Nube: token inyectado como variable de entorno (Streamlit secret)
+        token_b64 = os.environ.get("GOOGLE_TOKEN_B64")
+        if token_b64:
+            import base64
+            import json
+
+            info = json.loads(base64.b64decode(token_b64).decode("utf-8"))
+            creds = Credentials.from_authorized_user_info(info, SCOPES)
+            if not creds.valid:
+                if creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
+                else:
+                    raise CalendarAuthError(
+                        "Token de Google invalido o sin refresh_token en la nube. "
+                        "Regenera token.json localmente y actualiza el secret."
+                    )
+            return build("calendar", "v3", credentials=creds, cache_discovery=False)
+
+        # Local: token.json en disco (+ consentimiento interactivo si falta)
         creds: Credentials | None = None
         if os.path.exists(self._token_path):
             creds = Credentials.from_authorized_user_file(self._token_path, SCOPES)
@@ -90,6 +114,11 @@ class GoogleCalendarService:
 
         self._persist(creds)
         return build("calendar", "v3", credentials=creds, cache_discovery=False)
+
+    @classmethod
+    def is_authenticated(cls, token_path: str = "token.json") -> bool:
+        """True si hay token en la nube (env GOOGLE_TOKEN_B64) o token.json local."""
+        return bool(os.environ.get("GOOGLE_TOKEN_B64")) or os.path.exists(token_path)
 
     def _run_consent_flow(self) -> Credentials | None:
         if not os.path.exists(self._credentials_path):

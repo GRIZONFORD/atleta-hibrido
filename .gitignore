@@ -30,6 +30,7 @@ yazio_data.json
 *.sqlite3
 *.db
 streamlit_secrets.toml
+google_secret.toml
 
 # ── Sistema operativo / IDE ─────────────────────────────────────────
 .DS_Store

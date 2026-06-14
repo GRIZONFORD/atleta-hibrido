@@ -48,7 +48,7 @@ st_autorefresh(interval=5 * 60 * 1000, key="autorefresh")
 # var para que RealGarminAdapter (capa pura, sin Streamlit) lo lea sin acoplarse.
 import os as _os  # noqa: E402
 try:
-    for _k in ("GARMIN_TOKEN_B64", "GARMIN_EMAIL"):
+    for _k in ("GARMIN_TOKEN_B64", "GARMIN_EMAIL", "GOOGLE_TOKEN_B64"):
         if _k in st.secrets:
             _os.environ[_k] = str(st.secrets[_k])
 except Exception:
@@ -744,12 +744,24 @@ with c3:
         </div>""",
         unsafe_allow_html=True,
     )
-    creds = Path("credentials.json").exists()
+    cal_ready = bool(_os.environ.get("GOOGLE_TOKEN_B64")) or Path("token.json").exists()
     if st.button(
-        "🔄 Agendar en Google Calendar" if creds else "👁️ Ver horario del bloque",
+        "📅 Agendar en Google Calendar" if cal_ready else "👁️ Ver horario del bloque",
         use_container_width=True, type="primary",
     ):
-        if not creds:
+        if cal_ready:
+            try:
+                from services.google_calendar import GoogleCalendarService
+                svc = GoogleCalendarService(
+                    timezone="America/Bogota", window=AllowedWindow(6, 21),
+                )
+                ev = svc.upsert_training_block(today, decision)
+                hhmm = ev["start"]["dateTime"][11:16]
+                st.success(f"✅ Agendado en tu Google Calendar a las **{hhmm}**")
+                st.caption("Revisa tu calendario — el bloque ya está sincronizado.")
+            except Exception as exc:
+                st.error(f"⛔ No se pudo agendar: {exc}")
+        else:
             try:
                 start_dt = SlotFinder(AllowedWindow(6, 21)).find(
                     today, decision.start_hour, decision.duration_min, busy_today, TZ,
@@ -758,14 +770,8 @@ with c3:
                 st.success(f"✅ Slot libre: **{start_dt.strftime('%H:%M')} – {end_dt.strftime('%H:%M')}**")
                 if start_dt.hour != decision.start_hour:
                     st.warning(f"⏩ Reasignado desde {decision.start_hour}:00 (había conflicto)")
+                st.caption("💡 Conecta Google Calendar para agendarlo de verdad (ver guía).")
             except ScheduleConflictError as exc:
-                st.error(f"⛔ {exc}")
-        else:
-            try:
-                from services.google_calendar import GoogleCalendarService
-                ev = GoogleCalendarService().upsert_training_block(today, decision)
-                st.success(f"✅ Agendado: {ev['start']['dateTime'][11:16]}")
-            except Exception as exc:
                 st.error(f"⛔ {exc}")
 
 st.markdown("<br>", unsafe_allow_html=True)
