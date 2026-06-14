@@ -37,9 +37,13 @@ def main() -> None:
         (GARTH_HOME / "config.json").read_text(encoding="utf-8")
     ).get("email", "")
 
+    import base64
+
     api = Garmin()
     api.client.load(str(GARTH_HOME))   # carga local (sin red)
-    token_b64 = api.client.dumps()     # serializa a base64
+    token_json = api.client.dumps()    # OJO: dumps() devuelve JSON crudo (con comillas)
+    # Lo codificamos a base64 REAL → string seguro para TOML (sin comillas ni saltos).
+    token_b64 = base64.b64encode(token_json.encode("utf-8")).decode("ascii")
 
     # Escribir a ARCHIVO (no imprimir): la terminal parte el token largo con
     # saltos de línea y eso rompe el TOML al pegarlo. El archivo lo mantiene

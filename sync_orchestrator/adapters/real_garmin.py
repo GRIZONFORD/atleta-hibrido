@@ -24,10 +24,15 @@ class RealGarminAdapter:
         token_b64 = os.environ.get("GARMIN_TOKEN_B64")
         if token_b64:
             # ☁️ Nube: token inyectado como variable de entorno (Streamlit secret).
-            # garminconnect detecta strings >512 chars como token base64 (no ruta).
+            # El secret es base64 del JSON de sesión (codificado así para ser
+            # TOML-safe). Lo decodificamos al JSON original; garminconnect detecta
+            # strings >512 chars como datos de token directos (no como ruta).
+            import base64
+
             email = os.environ.get("GARMIN_EMAIL", "")
+            token_json = base64.b64decode(token_b64).decode("utf-8")
             self._api = Garmin(email=email, password="placeholder")
-            self._api.login(tokenstore=token_b64)
+            self._api.login(tokenstore=token_json)
         else:
             # 💻 Local: token persistido en .garth_token por setup_garmin.py
             config_file = GARTH_HOME / "config.json"
