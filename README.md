@@ -43,6 +43,16 @@ cd sync_orchestrator
 python setup_garmin.py          # login interactivo único → token cifrado local
 ```
 
+### API REST (FastAPI) — opcional
+El dominio se expone como API REST (adaptador de entrada). Útil para integraciones
+y como contrato del futuro frontend Next.js.
+```powershell
+cd sync_orchestrator
+.venv\Scripts\uvicorn api:app --reload
+```
+Docs interactivas: http://localhost:8000/docs · Endpoints: `/readiness/today`,
+`/plan/today`, `/nutrition/targets`, `/trend`, `POST /calendar/schedule`.
+
 ## 🧠 Cómo decide el sistema
 
 1. **Ingesta** — HRV (RMSSD/SDNN, motor clínico `hrv-analysis`) + carga aguda/crónica de Garmin.

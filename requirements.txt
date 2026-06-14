@@ -9,6 +9,10 @@ numpy==2.4.6
 pandas==3.0.3
 plotly==6.8.0
 
+# ── API REST (adaptador de entrada — frontend desacoplado) ───────────────────
+fastapi==0.137.0
+uvicorn[standard]==0.49.0
+
 # ── Visualizaciones premium (GitHub) ────────────────────────────────────────
 streamlit-echarts==0.7.0      # andfanilo/streamlit-echarts — gauge Apache ECharts
 streamlit-extras==1.6.0       # arnaudmiribel/streamlit-extras — componentes premium
