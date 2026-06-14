@@ -4,6 +4,7 @@ Ejecutar: .venv\\Scripts\\streamlit run app/dashboard.py
 """
 from __future__ import annotations
 
+import dataclasses
 import datetime as dt
 import sys
 import warnings
@@ -726,14 +727,28 @@ with c2:
 with c3:
     st.markdown("<div class='section-label'>🎯 Bloque de Entrenamiento</div>",
                 unsafe_allow_html=True)
-    slot_lbl = "☀️ Mañana (AM)" if decision.slot.value == 1 else "🌆 Tarde (PM)"
+
+    # Control de hora manual: si se activa, la hora elegida pasa a ser la
+    # "preferida" y el SlotFinder sigue esquivando conflictos (puede desplazarla).
+    manual_hour = st.toggle("🕐 Ajustar la hora manualmente", value=False, key="manual_hour")
+    if manual_hour:
+        h = st.slider(
+            "Hora de inicio preferida", min_value=6, max_value=21,
+            value=int(decision.start_hour), step=1, format="%d:00", key="man_h",
+        )
+        eff_decision = dataclasses.replace(decision, start_hour=h)
+    else:
+        eff_decision = decision
+
+    slot_lbl = "☀️ Mañana (AM)" if eff_decision.start_hour < 12 else "🌆 Tarde (PM)"
     st.markdown(
         f"""<div class="metric-card">
             <div style="color:{zcfg['color']};font-size:17px;font-weight:700;margin-bottom:8px;">
-                {decision.title}
+                {eff_decision.title}
             </div>
             <div style="color:{MUTED};font-size:12px;margin-bottom:14px;">
-                {slot_lbl} &nbsp;·&nbsp; {decision.start_hour}:00 &nbsp;·&nbsp; {decision.duration_min} min
+                {slot_lbl} &nbsp;·&nbsp; {eff_decision.start_hour}:00 &nbsp;·&nbsp; {eff_decision.duration_min} min
+                {' &nbsp;·&nbsp; <span style="color:#f59e0b">manual</span>' if manual_hour else ''}
             </div>
             <div style="font-size:13px;line-height:2.1;">
                 🥩 Proteína: <b style="color:{NEON};">{prot_target:.0f} g</b>
@@ -755,21 +770,23 @@ with c3:
                 svc = GoogleCalendarService(
                     timezone="America/Bogota", window=AllowedWindow(6, 21),
                 )
-                ev = svc.upsert_training_block(today, decision)
+                ev = svc.upsert_training_block(today, eff_decision)
                 hhmm = ev["start"]["dateTime"][11:16]
                 st.success(f"✅ Agendado en tu Google Calendar a las **{hhmm}**")
+                if manual_hour and hhmm[:2] != f"{eff_decision.start_hour:02d}":
+                    st.warning(f"⏩ Movido desde las {eff_decision.start_hour}:00 (esa hora estaba ocupada)")
                 st.caption("Revisa tu calendario — el bloque ya está sincronizado.")
             except Exception as exc:
                 st.error(f"⛔ No se pudo agendar: {exc}")
         else:
             try:
                 start_dt = SlotFinder(AllowedWindow(6, 21)).find(
-                    today, decision.start_hour, decision.duration_min, busy_today, TZ,
+                    today, eff_decision.start_hour, eff_decision.duration_min, busy_today, TZ,
                 )
-                end_dt = start_dt + dt.timedelta(minutes=decision.duration_min)
+                end_dt = start_dt + dt.timedelta(minutes=eff_decision.duration_min)
                 st.success(f"✅ Slot libre: **{start_dt.strftime('%H:%M')} – {end_dt.strftime('%H:%M')}**")
-                if start_dt.hour != decision.start_hour:
-                    st.warning(f"⏩ Reasignado desde {decision.start_hour}:00 (había conflicto)")
+                if start_dt.hour != eff_decision.start_hour:
+                    st.warning(f"⏩ Reasignado desde {eff_decision.start_hour}:00 (había conflicto)")
                 st.caption("💡 Conecta Google Calendar para agendarlo de verdad (ver guía).")
             except ScheduleConflictError as exc:
                 st.error(f"⛔ {exc}")
@@ -819,7 +836,7 @@ with rc2:
                 unsafe_allow_html=True)
     st.caption("🔴 Bloqueado &nbsp;·&nbsp; 🟢 Tu bloque de entrenamiento (sin colisiones)")
     st.plotly_chart(
-        timeline_fig(decision, busy_today),
+        timeline_fig(eff_decision, busy_today),
         use_container_width=True, config={"displayModeBar": False},
     )
 
