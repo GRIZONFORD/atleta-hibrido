@@ -536,6 +536,15 @@ garmin_connected = RealGarminAdapter.is_authenticated()
 
 with st.sidebar:
     st.markdown("## 🧬 Atleta Híbrido OS")
+
+    # 🔎 Diagnóstico de secrets (temporal — NO expone el token, solo sí/no + longitud)
+    _dbg_tok = _os.environ.get("GARMIN_TOKEN_B64")
+    _dbg_mail = _os.environ.get("GARMIN_EMAIL")
+    st.caption(
+        f"🔎 debug · token: {('SÍ ' + str(len(_dbg_tok)) + 'c') if _dbg_tok else 'NO'}"
+        f" · email: {'SÍ' if _dbg_mail else 'NO'}"
+    )
+
     st.markdown("<div class='section-label'>📡 Garmin Connect</div>", unsafe_allow_html=True)
 
     if garmin_connected:
